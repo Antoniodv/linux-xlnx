@@ -189,12 +189,26 @@ static inline void scmi_dump_header_dbg(struct device *dev,
 static void scmi_fetch_response(struct scmi_xfer *xfer,
 				struct scmi_shared_mem __iomem *mem)
 {
+	u32 reg_cnt = 0;
+	u32 packet = 0;
+	u32 byte_cnt = 0;
+	u32 end_reg;
+
 	xfer->hdr.status = ioread32(mem->msg_payload);
 	/* Skip the length of header and statues in payload area i.e 8 bytes*/
 	xfer->rx.len = min_t(size_t, xfer->rx.len, ioread32(&mem->length) - 8);
 
 	/* Take a copy to the rx buffer.. */
-	memcpy_fromio(xfer->rx.buf, mem->msg_payload + 4, xfer->rx.len);
+	//memcpy_fromio(xfer->rx.buf, mem->msg_payload + 4, xfer->rx.len);
+
+	end_reg = xfer->rx.len;
+	
+	for(; reg_cnt < end_reg; reg_cnt = reg_cnt + 4){
+		packet = ioread32(mem->msg_payload + 4 + reg_cnt);
+		for (byte_cnt = 0; byte_cnt < 4; byte_cnt++){
+			*(u8 *)(xfer->rx.buf + byte_cnt) = (u8)(packet >> (8*byte_cnt));
+		}
+	}
 }
 
 /**
@@ -220,6 +234,8 @@ static void scmi_rx_callback(struct mbox_client *cl, void *m)
 	struct scmi_shared_mem __iomem *mem = cinfo->payload;
 
 	xfer_id = MSG_XTRACT_TOKEN(ioread32(&mem->msg_header));
+
+	
 
 	/* Are we even expecting this? */
 	if (!test_bit(xfer_id, minfo->xfer_alloc_table)) {
@@ -271,14 +287,40 @@ static void scmi_tx_prepare(struct mbox_client *cl, void *m)
 	struct scmi_chan_info *cinfo = client_to_scmi_chan_info(cl);
 	struct scmi_shared_mem __iomem *mem = cinfo->payload;
 
+	u32 reg_cnt = 0;
+	u32 packet = 0;
+	u32 byte_cnt = 0;
+	u32 end_reg;
+	//adv start
+	printk("tx_prepare: channel status = 0");
+	printk("tx_prepare: flags = %x",t->hdr.poll_completion ? 0 : SCMI_SHMEM_FLAG_INTR_ENABLED);
+	printk("tx_prepare: length = %x", sizeof(mem->msg_header) + t->tx.len);
+	printk("tx_prepare: header = %x", pack_scmi_header(&t->hdr));
+	printk("tx_prepare: payload][0]= %x",  t->tx.buf);
+	printk("tx_prepare: tx_len 0h %x",  t->tx.len);
+	printk("tx_prepare: rx_len 0h %x",  t->rx.len);
+
+	printk("tx_prepare: channel status addr: 0x%x",  &mem->channel_status);
+	printk("tx_prepare: payload[0] addr: 0x%x",  &mem->msg_payload);
+	//adv end
+
 	/* Mark channel busy + clear error */
 	iowrite32(0x0, &mem->channel_status);
 	iowrite32(t->hdr.poll_completion ? 0 : SCMI_SHMEM_FLAG_INTR_ENABLED,
 		  &mem->flags);
 	iowrite32(sizeof(mem->msg_header) + t->tx.len, &mem->length);
 	iowrite32(pack_scmi_header(&t->hdr), &mem->msg_header);
-	if (t->tx.buf)
-		memcpy_toio(mem->msg_payload, t->tx.buf, t->tx.len);
+
+	if (t->tx.buf){// non era len?
+		//memcpy_toio(mem->msg_payload, t->tx.buf, t->tx.len);
+		end_reg = t->tx.len;		
+		for(; reg_cnt < end_reg; reg_cnt = reg_cnt + 4){
+			for (byte_cnt = 0; byte_cnt < 4; byte_cnt++){
+				packet  |= (u32)(*(u32 *)(t->tx.buf + byte_cnt) << (8*byte_cnt));
+			}
+			iowrite32(packet, mem->msg_payload);
+		}
+	}
 }
 
 /**
@@ -347,7 +389,7 @@ void scmi_xfer_put(const struct scmi_handle *handle, struct scmi_xfer *xfer)
 	spin_unlock_irqrestore(&minfo->xfer_lock, flags);
 }
 
-static bool
+static bool 
 scmi_xfer_poll_done(const struct scmi_chan_info *cinfo, struct scmi_xfer *xfer)
 {
 	struct scmi_shared_mem __iomem *mem = cinfo->payload;
@@ -421,6 +463,7 @@ int scmi_do_xfer(const struct scmi_handle *handle, struct scmi_xfer *xfer)
 		}
 	}
 
+
 	if (!ret && xfer->hdr.status)
 		ret = scmi_to_linux_errno(xfer->hdr.status);
 
@@ -430,6 +473,7 @@ int scmi_do_xfer(const struct scmi_handle *handle, struct scmi_xfer *xfer)
 	 * Unfortunately, we have to kick the mailbox framework after we have
 	 * received our message.
 	 */
+	printk("mbox xfer done");
 	mbox_client_txdone(cinfo->chan, ret);
 
 	return ret;
@@ -700,6 +744,7 @@ static int scmi_remove(struct platform_device *pdev)
 static inline int
 scmi_mbox_chan_setup(struct scmi_info *info, struct device *dev, int prot_id)
 {
+	printk("scmi_mbox_chan_setup...");
 	int ret;
 	struct resource res;
 	resource_size_t size;
@@ -734,6 +779,7 @@ scmi_mbox_chan_setup(struct scmi_info *info, struct device *dev, int prot_id)
 	}
 
 	size = resource_size(&res);
+	printk("size of mb cinfo->payload size: %d", size);	//adv
 	cinfo->payload = devm_ioremap(info->dev, res.start, size);
 	if (!cinfo->payload) {
 		dev_err(dev, "failed to ioremap SCMI Tx payload\n");
