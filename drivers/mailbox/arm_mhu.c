@@ -24,16 +24,29 @@
 #include <linux/amba/bus.h>
 #include <linux/mailbox_controller.h>
 
+//adv start
+/*
+	Essendo le prime define tutte nulle, tutto quello che viene fatto su 3 registri in tx e, 
+	separatamente in rx, finisce su STAT.
+	In particolare vengono fatti i SET e CLEAR.
+	Le normali set e clear vengono quindi sostituite da altre che vanno direttamente a modificare
+	il contenuto dei registri STAT di stato, però prendono gli stessi ingressi delle write e read perchè
+	tanto puntano sempre a STAT.
+*/
 #define INTR_STAT_OFS	0x0
-#define INTR_SET_OFS	0x8
-#define INTR_CLR_OFS	0x10
+#define INTR_SET_OFS	0x0
+#define INTR_CLR_OFS	0x0
 
-#define MHU_LP_OFFSET	0x0
-#define MHU_HP_OFFSET	0x20
-#define MHU_SEC_OFFSET	0x200
-#define TX_REG_OFFSET	0x100
+#define MHU_LP_OFFSET	0x0 	//questo è realmente utilizzato
+#define MHU_HP_OFFSET	0x8 	//sotto la mailbox mappo i due canali che non dovrebbero essere utilizzati
+#define MHU_SEC_OFFSET	0x16 	//ma nel caso in cui lo siano almeno non sono sovrapposti a LP.
+#define TX_REG_OFFSET	0x4 	/*grazie alle modifiche fatte sotto in tx_reg ci finisce l'indice di rx
+							  	mentre in rx_reg ci finisce tx_reg+ questo offset. In questo modo abbiamo prima tx e poi rx
+							  	che corrispondono alla configurazione Doorbell (tx) e poi Completion (rx) della 
+							  	mailbox generata con RegGen*/
 
 #define MHU_CHANS	3
+//adv end
 
 struct mhu_link {
 	unsigned irq;
@@ -48,20 +61,48 @@ struct arm_mhu {
 	struct mbox_controller mbox;
 };
 
+//adv start
+static void intr_set(u32 value, volatile void __iomem *addr)
+{
+	u32 read_value;
+
+	//printk("intr_set: val = %x",value);
+	read_value = readl_relaxed(addr);
+	value = value | read_value;
+	writel_relaxed(value, addr);
+}
+
+static void intr_clr(u32 value, volatile void __iomem *addr)
+{
+	u32 read_value;
+
+	//printk("intr_clr: val = %x",value);
+	value = value ^ (0xFFFFFFFF);
+	read_value = readl_relaxed(addr);
+	value = value & read_value;
+	writel_relaxed(value, addr);
+}
+//adv end
+
 static irqreturn_t mhu_rx_interrupt(int irq, void *p)
 {
+	
 	struct mbox_chan *chan = p;
 	struct mhu_link *mlink = chan->con_priv;
 	u32 val;
 
+
 	val = readl_relaxed(mlink->rx_reg + INTR_STAT_OFS);
-	if (!val)
-		return IRQ_NONE;
+
+	// if (!val)
+	// 	return IRQ_NONE;
 
 	mbox_chan_received_data(chan, (void *)&val);
 
-	writel_relaxed(val, mlink->rx_reg + INTR_CLR_OFS);
-
+	// // //adv start
+	// // //writel_relaxed(val, mlink->rx_reg + INTR_CLR_OFS);
+	intr_clr(val, mlink->rx_reg + INTR_CLR_OFS);
+	// // //adv end
 	return IRQ_HANDLED;
 }
 
@@ -78,19 +119,32 @@ static int mhu_send_data(struct mbox_chan *chan, void *data)
 	struct mhu_link *mlink = chan->con_priv;
 	u32 *arg = data;
 
-	writel_relaxed(*arg, mlink->tx_reg + INTR_SET_OFS);
+	//adv start
+	printk("mhu_send data to addr: 0x%x", mlink->tx_reg + INTR_SET_OFS);
+	//writel_relaxed(*arg, mlink->tx_reg + INTR_SET_OFS);
+	intr_set(*arg, mlink->tx_reg + INTR_SET_OFS);
+	//adv end
 
 	return 0;
 }
 
 static int mhu_startup(struct mbox_chan *chan)
 {
+	printk("mhu startup");
 	struct mhu_link *mlink = chan->con_priv;
 	u32 val;
 	int ret;
 
 	val = readl_relaxed(mlink->tx_reg + INTR_STAT_OFS);
-	writel_relaxed(val, mlink->tx_reg + INTR_CLR_OFS);
+	//adv start
+	//writel_relaxed(val, mlink->tx_reg + INTR_CLR_OFS);
+	intr_clr(val, mlink->tx_reg + INTR_CLR_OFS);
+	//adv end
+
+	//adv start 
+	//printk("IRQ is not acquired in mhu_startup on purpose, otherwise it will return error");
+	printk("mhu_startup: requested MHU irq %d", mlink->irq);
+	printk("mhu_startup: for mhu with rx reg %d", mlink->rx_reg);
 
 	ret = request_irq(mlink->irq, mhu_rx_interrupt,
 			  IRQF_SHARED, "mhu_link", chan);
@@ -99,7 +153,8 @@ static int mhu_startup(struct mbox_chan *chan)
 			"Unable to acquire IRQ %d\n", mlink->irq);
 		return ret;
 	}
-
+	printk("mhu_startup: OK");
+	//adv end
 	return 0;
 }
 
@@ -138,8 +193,14 @@ static int mhu_probe(struct amba_device *adev, const struct amba_id *id)
 	for (i = 0; i < MHU_CHANS; i++) {
 		mhu->chan[i].con_priv = &mhu->mlink[i];
 		mhu->mlink[i].irq = adev->irq[i];
-		mhu->mlink[i].rx_reg = mhu->base + mhu_reg[i];
-		mhu->mlink[i].tx_reg = mhu->mlink[i].rx_reg + TX_REG_OFFSET;
+		//adv start in questo modo tx/doorbell viene prima di rx/completion rispecchiando la struttura 
+		//della mailbox di reggen
+		mhu->mlink[i].tx_reg = mhu->base + mhu_reg[i];
+		printk("mhu tx reg = %d", mhu->mlink[i].tx_reg);
+
+		mhu->mlink[i].rx_reg = mhu->mlink[i].tx_reg + TX_REG_OFFSET;
+		printk("mhu rx reg = %d", mhu->mlink[i].rx_reg);
+		//adv end
 	}
 
 	mhu->mbox.dev = dev;
