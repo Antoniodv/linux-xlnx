@@ -217,8 +217,9 @@ postcore_initcall(amba_init);
 static int amba_get_enable_pclk(struct amba_device *pcdev)
 {
 	int ret;
-
-	pcdev->pclk = clk_get(&pcdev->dev, "apb_pclk");
+	//adv
+	//pcdev->pclk = clk_get(&pcdev->dev, "apb_pclk");
+	pcdev->pclk = clk_get(&pcdev->dev, "clk_apb");
 	if (IS_ERR(pcdev->pclk))
 		return PTR_ERR(pcdev->pclk);
 
@@ -350,6 +351,7 @@ static void amba_device_release(struct device *dev)
 	kfree(d);
 }
 
+
 static int amba_device_try_add(struct amba_device *dev, struct resource *parent)
 {
 	u32 size;
@@ -379,25 +381,31 @@ static int amba_device_try_add(struct amba_device *dev, struct resource *parent)
 	}
 
 	ret = dev_pm_domain_attach(&dev->dev, true);
+	
 	if (ret) {
 		iounmap(tmp);
 		goto err_release;
 	}
 
 	ret = amba_get_enable_pclk(dev);
+
 	if (ret == 0) {
 		u32 pid, cid;
 
-		/*
-		 * Read pid and cid based on size of resource
-		 * they are located at end of region
-		 */
-		for (pid = 0, i = 0; i < 4; i++)
-			pid |= (readl(tmp + size - 0x20 + 4 * i) & 255) <<
-				(i * 8);
-		for (cid = 0, i = 0; i < 4; i++)
-			cid |= (readl(tmp + size - 0x10 + 4 * i) & 255) <<
-				(i * 8);
+	// 	/*
+	// 	 * Read pid and cid based on size of resource
+	// 	 * they are located at end of region
+	// 	 */
+	// 	for (pid = 0, i = 0; i < 4; i++)
+	// 		pid |= (readl(tmp + size - 0x20 + 4 * i) & 255) <<
+	// 			(i * 8);
+	// 	for (cid = 0, i = 0; i < 4; i++)
+	// 		cid |= (readl(tmp + size - 0x10 + 4 * i) & 255) <<
+	// 			(i * 8);
+
+	//adv
+		cid = AMBA_CID; //same as requested in the next lines
+		pid = 0x1bb098; //same as in mhu driver id (llok in the driver code)
 
 		amba_put_disable_pclk(dev);
 
