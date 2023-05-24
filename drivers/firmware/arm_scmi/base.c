@@ -225,7 +225,7 @@ int scmi_base_protocol_init(struct scmi_handle *h)
 	struct device *dev = handle->dev;
 	struct scmi_revision_info *rev = handle->version;
 
-	ret = scmi_version_get(handle, SCMI_PROTOCOL_BASE, &version);
+	ret = scmi_version_get(handle, SCMI_PROTOCOL_BASE, &version);   //rx.len = 4
 	if (ret)
 		return ret;
 
@@ -236,18 +236,20 @@ int scmi_base_protocol_init(struct scmi_handle *h)
 	rev->major_ver = PROTOCOL_REV_MAJOR(version),
 	rev->minor_ver = PROTOCOL_REV_MINOR(version);
 
-	scmi_base_attributes_get(handle);
-	scmi_base_vendor_id_get(handle, false);
-	scmi_base_vendor_id_get(handle, true);
-	scmi_base_implementation_version_get(handle);
-	scmi_base_implementation_list_get(handle, prot_imp);
-	scmi_setup_protocol_implemented(handle, prot_imp);
+	scmi_base_attributes_get(handle);  //rx.len = 4
+	scmi_base_vendor_id_get(handle, false);  //rx.len = 16
+	scmi_base_vendor_id_get(handle, true); //rx.len = 16
+	scmi_base_implementation_version_get(handle); //rx.len = 4
+	scmi_base_implementation_list_get(handle, prot_imp);  //rx.len = 128
+	scmi_setup_protocol_implemented(handle, prot_imp);  //rx.len = 4  
 
 	dev_info(dev, "SCMI Protocol v%d.%d '%s:%s' Firmware version 0x%x\n",
 		 rev->major_ver, rev->minor_ver, rev->vendor_id,
 		 rev->sub_vendor_id, rev->impl_ver);
-	dev_dbg(dev, "Found %d protocol(s) %d agent(s)\n", rev->num_protocols,
-		rev->num_agents);
+	// dev_dbg(dev, "Found %d protocol(s) %d agent(s)\n", rev->num_protocols,
+	// 	rev->num_agents);
+	printk("Found %d protocol(s) %d agent(s)\n", rev->num_protocols,
+	 	rev->num_agents);
 
 	for (id = 0; id < rev->num_agents; id++) {
 		scmi_base_discover_agent_get(handle, id, name);
