@@ -473,7 +473,6 @@ int scmi_do_xfer(const struct scmi_handle *handle, struct scmi_xfer *xfer)
 	 * Unfortunately, we have to kick the mailbox framework after we have
 	 * received our message.
 	 */
-	printk("mbox xfer done");
 	mbox_client_txdone(cinfo->chan, ret);
 
 	return ret;
