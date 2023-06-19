@@ -100,6 +100,11 @@
 	clocks = <&zynqmp_clk ACPU>;
 };
 
+&cpu1 {
+    clocks = <&scmi_dvfs 0>;
+};
+
+
 &fpd_dma_chan1 {
 	clocks = <&zynqmp_clk GDMA_REF>, <&zynqmp_clk LPD_LSBUS>;
 };
