@@ -176,7 +176,7 @@ static int scmi_base_implementation_list_get(const struct scmi_handle *handle,
     // } while (loop_num_ret);
 
     u32 *wide_list;
-    wide_list = t->rx.buf + sizeof(*num_ret);
+    wide_list = t->rx.buf + 1;
     u32 pack = *wide_list;
 
     for (loop = 0; loop < 4; loop++){
