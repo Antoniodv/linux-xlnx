@@ -146,6 +146,10 @@ static int scmi_base_implementation_list_get(const struct scmi_handle *handle,
     u32 tot_num_ret = 0, loop_num_ret;
     struct device *dev = handle->dev;
 
+	u32 *wide_list;
+    wide_list = t->rx.buf + 1;
+    u32 pack = *wide_list;
+
     ret = scmi_xfer_get_init(handle, BASE_DISCOVER_LIST_PROTOCOLS,
                  SCMI_PROTOCOL_BASE, sizeof(*num_skip), 0, &t);
     if (ret)
@@ -175,9 +179,7 @@ static int scmi_base_implementation_list_get(const struct scmi_handle *handle,
     //  tot_num_ret += loop_num_ret;
     // } while (loop_num_ret);
 
-    u32 *wide_list;
-    wide_list = t->rx.buf + 1;
-    u32 pack = *wide_list;
+
 
     for (loop = 0; loop < 4; loop++){
         protocols_imp[loop] = (u8)(packet >> (8*loop));
