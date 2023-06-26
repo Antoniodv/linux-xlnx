@@ -164,9 +164,12 @@ static int scmi_base_implementation_list_get(const struct scmi_handle *handle,
         if (ret)
             break;
 
+		printk("t->tx.buf: %d", *(t->tx.buf));
+		printk("t->rx.buf: %d", *(t->rx.buf));
+		printk("t->rx.buf + 4: %d", *(t->rx.buf + 4));
 		printk("list - 4: %d", *(list - 4));
 		printk("list: %d", *(list ));
-		
+
         loop_num_ret = le32_to_cpu(*num_ret);
 		printk("loop_num_ret %d", loop_num_ret);
         if (tot_num_ret + loop_num_ret > MAX_PROTOCOLS_IMP) {
