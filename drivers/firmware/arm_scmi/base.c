@@ -164,9 +164,9 @@ static int scmi_base_implementation_list_get(const struct scmi_handle *handle,
         if (ret)
             break;
 
-		printk("t->tx.buf: %d", *(t->tx.buf));
-		printk("t->rx.buf: %d", *(t->rx.buf));
-		printk("t->rx.buf + 4: %d", *(t->rx.buf + 4));
+		printk("t->tx.buf: %d", *(u8 *)(t->tx.buf));
+		printk("t->rx.buf: %d", *(u8 *)(t->rx.buf));
+		printk("t->rx.buf + 4: %d", *(u8 *)(t->rx.buf + 4));
 		printk("list - 4: %d", *(list - 4));
 		printk("list: %d", *(list ));
 
