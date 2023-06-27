@@ -210,7 +210,7 @@ static void scmi_fetch_response(struct scmi_xfer *xfer,
 
 	for(; reg_cnt < end_reg; reg_cnt = reg_cnt + 4){
 		packet = ioread32(mem->msg_payload + 4 + reg_cnt);
-		printk("pack:%d",packet);
+		if(packet != 0){ printk("pack:%d",packet);}
 		for (byte_cnt = 0; byte_cnt < 4; byte_cnt++){
 			*(u8 *)(xfer->rx.buf + byte_cnt) = (u8)(packet >> (8*byte_cnt));
 		}
