@@ -207,7 +207,7 @@ static void scmi_fetch_response(struct scmi_xfer *xfer,
 	}else{ 
 		end_reg = xfer->rx.len;
 	}
-
+	printk("end_reg");
 	for(; reg_cnt < end_reg; reg_cnt = reg_cnt + 4){
 		packet = ioread32(mem->msg_payload + 4 + reg_cnt);
 		if(packet != 0){ printk("pack:%d",packet);}
