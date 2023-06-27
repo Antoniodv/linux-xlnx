@@ -35,6 +35,7 @@
 #define MSG_TOKEN_ID_MASK	GENMASK(27, 18)
 #define MSG_XTRACT_TOKEN(hdr)	FIELD_GET(MSG_TOKEN_ID_MASK, (hdr))
 #define MSG_TOKEN_MAX		(MSG_XTRACT_TOKEN(MSG_TOKEN_ID_MASK) + 1)
+#define MAX_PAYLOAD_BYTE_SIZE 32*4
 
 enum scmi_error_codes {
 	SCMI_SUCCESS = 0,	/* Success */
@@ -201,8 +202,12 @@ static void scmi_fetch_response(struct scmi_xfer *xfer,
 	/* Take a copy to the rx buffer.. */
 	//memcpy_fromio(xfer->rx.buf, mem->msg_payload + 4, xfer->rx.len);
 
-	end_reg = xfer->rx.len;
-	
+	if (xfer->rx.len == 0){
+		end_reg = MAX_PAYLOAD_BYTE_SIZE;
+	}else{ 
+		end_reg = xfer->rx.len;
+	}
+
 	for(; reg_cnt < end_reg; reg_cnt = reg_cnt + 4){
 		packet = ioread32(mem->msg_payload + 4 + reg_cnt);
 		for (byte_cnt = 0; byte_cnt < 4; byte_cnt++){
