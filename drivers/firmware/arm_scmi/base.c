@@ -137,56 +137,47 @@ scmi_base_implementation_version_get(const struct scmi_handle *handle)
  * Return: 0 on success, else appropriate SCMI error.
  */
 static int scmi_base_implementation_list_get(const struct scmi_handle *handle,
-                         u8 *protocols_imp)
+					     u8 *protocols_imp)
 {
-    u8 *list;
-    int ret, loop;
-    struct scmi_xfer *t;
-    __le32 *num_skip, *num_ret;
-    u32 tot_num_ret = 0, loop_num_ret;
-    struct device *dev = handle->dev;
+	u8 *list;
+	int ret, loop;
+	struct scmi_xfer *t;
+	__le32 *num_skip, *num_ret;
+	u32 tot_num_ret = 0, loop_num_ret;
+	struct device *dev = handle->dev;
 
-    ret = scmi_xfer_get_init(handle, BASE_DISCOVER_LIST_PROTOCOLS,
-                 SCMI_PROTOCOL_BASE, sizeof(*num_skip), 0, &t);
-    if (ret)
-        return ret;
+	ret = scmi_xfer_get_init(handle, BASE_DISCOVER_LIST_PROTOCOLS,
+				 SCMI_PROTOCOL_BASE, sizeof(*num_skip), 0, &t);
+	if (ret)
+		return ret;
 
-    num_skip = t->tx.buf;
-    num_ret = t->rx.buf;
-    list = t->rx.buf + sizeof(*num_ret);
+	num_skip = t->tx.buf;
+	num_ret = t->rx.buf;
+	list = t->rx.buf + sizeof(*num_ret);
 
-    do {
-		printk("enter do");
-        /* Set the number of protocols to be skipped/already read */
-        *num_skip = cpu_to_le32(tot_num_ret);
+	do {
+		/* Set the number of protocols to be skipped/already read */
+		*num_skip = cpu_to_le32(tot_num_ret);
 
-        ret = scmi_do_xfer(handle, t);
-        if (ret)
-            break;
+		ret = scmi_do_xfer(handle, t);
+		if (ret)
+			break;
 
-		printk("t->tx.buf: %d", *(u8 *)(t->tx.buf));
-		printk("t->rx.buf: %d", *(u8 *)(t->rx.buf));
-		printk("t->rx.buf + 4: %d", *(u8 *)(t->rx.buf + 4));
-		printk("list - 4: %d", *(list - 4));
-		printk("list: %d", *(list ));
-
-        loop_num_ret = le32_to_cpu(*num_ret);
-		printk("loop_num_ret %d", loop_num_ret);
-        if (tot_num_ret + loop_num_ret > MAX_PROTOCOLS_IMP) {
-            dev_err(dev, "No. of Protocol > MAX_PROTOCOLS_IMP");
-            break;
-        }
-
-        for (loop = 0; loop < loop_num_ret; loop++){
-            protocols_imp[tot_num_ret + loop] = *(list + loop);
-			printk("protocol read: %d", *(list + loop));
+		loop_num_ret = le32_to_cpu(*num_ret);
+		if (tot_num_ret + loop_num_ret > MAX_PROTOCOLS_IMP) {
+			dev_err(dev, "No. of Protocol > MAX_PROTOCOLS_IMP");
+			break;
 		}
-        tot_num_ret += loop_num_ret;
-    } while (loop_num_ret);
 
-    scmi_xfer_put(handle, t);
+		for (loop = 0; loop < loop_num_ret; loop++)
+			protocols_imp[tot_num_ret + loop] = *(list + loop);
 
-    return ret;
+		tot_num_ret += loop_num_ret;
+	} while (loop_num_ret);
+
+	scmi_xfer_put(handle, t);
+
+	return ret;
 }
 
 
