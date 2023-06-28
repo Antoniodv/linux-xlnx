@@ -198,7 +198,6 @@ static void scmi_fetch_response(struct scmi_xfer *xfer,
 	xfer->hdr.status = ioread32(mem->msg_payload);
 	/* Skip the length of header and statues in payload area i.e 8 bytes*/
 	
-	printk("size_t:%d",size_t);
 	printk("xfer->rx.len:%d", xfer->rx.len);
 	printk("ioread32(&mem->length) - 8:%d",ioread32(&mem->length) - 8);
 	
