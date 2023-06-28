@@ -214,7 +214,7 @@ static void scmi_fetch_response(struct scmi_xfer *xfer,
 		if(packet != 0){ printk("pack:%d",packet);}
 		for (byte_cnt = 0; byte_cnt < 4; byte_cnt++){
 			*(u8 *)(xfer->rx.buf + byte_cnt) = (u8)(packet >> (8*byte_cnt));
-			if((*(u8 *)(xfer->rx.buf + byte_cnt)) != 0){ printk("byte:%d",*(u8 *)(xfer->rx.buf + byte_cnt));}
+			if((*(u8 *)(xfer->rx.buf + byte_cnt + reg_cnt)) != 0){ printk("byte:%d",*(u8 *)(xfer->rx.buf + byte_cnt));}
 		}
 	}
 }
