@@ -154,13 +154,7 @@ static int scmi_base_implementation_list_get(const struct scmi_handle *handle,
 	num_skip = t->tx.buf;
 	num_ret = t->rx.buf;
 	list = t->rx.buf + sizeof(*num_ret);
-	
-	printk("num_ret %d", *num_ret);
-	printk("list[0] %d", *list);
-	printk("list[1] %d", *(list+4));
-	printk("list[2] %d", *(list+8));
-	printk("list[3] %d", *(list+12));
-	
+		
 	do {
 		/* Set the number of protocols to be skipped/already read */
 		*num_skip = cpu_to_le32(tot_num_ret);
@@ -169,6 +163,11 @@ static int scmi_base_implementation_list_get(const struct scmi_handle *handle,
 		if (ret)
 			break;
 
+		printk("num_ret %d", *num_ret);
+		printk("list[0] %d", *list);
+		printk("list[1] %d", *(list+4));
+		printk("list[2] %d", *(list+8));
+		printk("list[3] %d", *(list+12));
 		loop_num_ret = le32_to_cpu(*num_ret);
 		if (tot_num_ret + loop_num_ret > MAX_PROTOCOLS_IMP) {
 			dev_err(dev, "No. of Protocol > MAX_PROTOCOLS_IMP");
