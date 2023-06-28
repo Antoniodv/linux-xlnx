@@ -153,7 +153,8 @@ static int scmi_base_implementation_list_get(const struct scmi_handle *handle,
 
 	num_skip = t->tx.buf;
 	num_ret = t->rx.buf;
-	list = t->rx.buf + sizeof(*num_ret);
+	//list = t->rx.buf + sizeof(*num_ret);
+	list = t->rx.buf + 4;
 		
 	do {
 		/* Set the number of protocols to be skipped/already read */
