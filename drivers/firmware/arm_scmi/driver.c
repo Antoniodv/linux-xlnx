@@ -324,7 +324,7 @@ static void scmi_tx_prepare(struct mbox_client *cl, void *m)
 		end_reg = t->tx.len;		
 		for(; reg_cnt < end_reg; reg_cnt = reg_cnt + 4){
 			for (byte_cnt = 0; byte_cnt < 4; byte_cnt++){
-				packet  |= (u32)(*(u32 *)(t->tx.buf + byte_cnt) << (8*byte_cnt));
+				packet  |= (u32)(*(u32 *)(t->tx.buf + byte_cnt + reg_cnt) << (8*byte_cnt));
 			}
 			iowrite32(packet, mem->msg_payload);
 		}
