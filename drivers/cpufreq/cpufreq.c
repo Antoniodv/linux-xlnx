@@ -2473,7 +2473,7 @@ int cpufreq_register_driver(struct cpufreq_driver *driver_data)
 {
 	unsigned long flags;
 	int ret;
-
+	printk("register cpufreq driver now");
 	if (cpufreq_disabled())
 		return -ENODEV;
 
