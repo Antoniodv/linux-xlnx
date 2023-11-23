@@ -120,7 +120,7 @@ static int mhu_send_data(struct mbox_chan *chan, void *data)
 	u32 *arg = data;
 
 	//adv start
-	printk("mhu_send data to addr: 0x%x", mlink->tx_reg + INTR_SET_OFS);
+	// printk("mhu_send data to addr: 0x%x", mlink->tx_reg + INTR_SET_OFS);
 	//writel_relaxed(*arg, mlink->tx_reg + INTR_SET_OFS);
 	intr_set(*arg, mlink->tx_reg + INTR_SET_OFS);
 	//adv end
@@ -130,7 +130,7 @@ static int mhu_send_data(struct mbox_chan *chan, void *data)
 
 static int mhu_startup(struct mbox_chan *chan)
 {
-	printk("mhu startup");
+	// printk("mhu startup");
 	struct mhu_link *mlink = chan->con_priv;
 	u32 val;
 	int ret;
@@ -142,9 +142,9 @@ static int mhu_startup(struct mbox_chan *chan)
 	//adv end
 
 	//adv start 
-	//printk("IRQ is not acquired in mhu_startup on purpose, otherwise it will return error");
-	printk("mhu_startup: requested MHU irq %d", mlink->irq);
-	printk("mhu_startup: for mhu with rx reg %d", mlink->rx_reg);
+	// printk("IRQ is not acquired in mhu_startup on purpose, otherwise it will return error");
+	// printk("mhu_startup: requested MHU irq %d", mlink->irq);
+	// printk("mhu_startup: for mhu with rx reg %d", mlink->rx_reg);
 
 	ret = request_irq(mlink->irq, mhu_rx_interrupt,
 			  IRQF_SHARED, "mhu_link", chan);
@@ -153,7 +153,7 @@ static int mhu_startup(struct mbox_chan *chan)
 			"Unable to acquire IRQ %d\n", mlink->irq);
 		return ret;
 	}
-	printk("mhu_startup: OK");
+	// printk("mhu_startup: OK");
 	//adv end
 	return 0;
 }
@@ -196,10 +196,10 @@ static int mhu_probe(struct amba_device *adev, const struct amba_id *id)
 		//adv start in questo modo tx/doorbell viene prima di rx/completion rispecchiando la struttura 
 		//della mailbox di reggen
 		mhu->mlink[i].tx_reg = mhu->base + mhu_reg[i];
-		printk("mhu tx reg = %d", mhu->mlink[i].tx_reg);
+		// printk("mhu tx reg = %d", mhu->mlink[i].tx_reg);
 
 		mhu->mlink[i].rx_reg = mhu->mlink[i].tx_reg + TX_REG_OFFSET;
-		printk("mhu rx reg = %d", mhu->mlink[i].rx_reg);
+		// printk("mhu rx reg = %d", mhu->mlink[i].rx_reg);
 		//adv end
 	}
 
