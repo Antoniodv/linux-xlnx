@@ -164,11 +164,11 @@ static int scmi_base_implementation_list_get(const struct scmi_handle *handle,
 		if (ret)
 			break;
 
-		printk("num_ret %d", *num_ret);
-		printk("list[0] %d", *list);
-		printk("list[1] %d", *(list+4));
-		printk("list[2] %d", *(list+8));
-		printk("list[3] %d", *(list+12));
+		// printk("num_ret %d", *num_ret);
+		// printk("list[0] %d", *list);
+		// printk("list[1] %d", *(list+4));
+		// printk("list[2] %d", *(list+8));
+		// printk("list[3] %d", *(list+12));
 		loop_num_ret = le32_to_cpu(*num_ret);
 		if (tot_num_ret + loop_num_ret > MAX_PROTOCOLS_IMP) {
 			dev_err(dev, "No. of Protocol > MAX_PROTOCOLS_IMP");
@@ -253,10 +253,10 @@ int scmi_base_protocol_init(struct scmi_handle *h)
 	dev_info(dev, "SCMI Protocol v%d.%d '%s:%s' Firmware version 0x%x\n",
 		 rev->major_ver, rev->minor_ver, rev->vendor_id,
 		 rev->sub_vendor_id, rev->impl_ver);
-	// dev_dbg(dev, "Found %d protocol(s) %d agent(s)\n", rev->num_protocols,
-	// 	rev->num_agents);
-	printk("Found %d protocol(s) %d agent(s)\n", rev->num_protocols,
-	 	rev->num_agents);
+	dev_dbg(dev, "Found %d protocol(s) %d agent(s)\n", rev->num_protocols,
+		rev->num_agents);
+	// printk("Found %d protocol(s) %d agent(s)\n", rev->num_protocols,
+	//  	rev->num_agents);
 
 	for (id = 0; id < rev->num_agents; id++) {
 		scmi_base_discover_agent_get(handle, id, name);

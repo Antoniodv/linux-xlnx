@@ -198,8 +198,8 @@ static void scmi_fetch_response(struct scmi_xfer *xfer,
 	xfer->hdr.status = ioread32(mem->msg_payload);
 	/* Skip the length of header and statues in payload area i.e 8 bytes*/
 	
-	printk("xfer->rx.len:%d", xfer->rx.len);
-	printk("ioread32(&mem->length) - 8:%d",ioread32(&mem->length) - 8);
+	// printk("xfer->rx.len:%d", xfer->rx.len);
+	// printk("ioread32(&mem->length) - 8:%d",ioread32(&mem->length) - 8);
 	
 	xfer->rx.len = min_t(size_t, xfer->rx.len, ioread32(&mem->length) - 8);
 
@@ -208,7 +208,7 @@ static void scmi_fetch_response(struct scmi_xfer *xfer,
 
 	end_reg = xfer->rx.len;
 
-	printk("end_reg %d",end_reg);
+	// printk("end_reg %d",end_reg);
 	for(; reg_cnt < end_reg; reg_cnt = reg_cnt + 4){
 		packet = ioread32(mem->msg_payload + 4 + reg_cnt);
 		for (byte_cnt = 0; byte_cnt < 4; byte_cnt++){
@@ -298,16 +298,16 @@ static void scmi_tx_prepare(struct mbox_client *cl, void *m)
 	u32 byte_cnt = 0;
 	u32 end_reg;
 	//adv start
-	printk("tx_prepare: channel status = 0");
-	printk("tx_prepare: flags = %x",t->hdr.poll_completion ? 0 : SCMI_SHMEM_FLAG_INTR_ENABLED);
-	printk("tx_prepare: length = %x", sizeof(mem->msg_header) + t->tx.len);
-	printk("tx_prepare: header = %x", pack_scmi_header(&t->hdr));
-	printk("tx_prepare: payload][0]= %x",  t->tx.buf);
-	printk("tx_prepare: tx_len 0h %x",  t->tx.len);
-	printk("tx_prepare: rx_len 0h %x",  t->rx.len);
+	// printk("tx_prepare: channel status = 0");
+	// printk("tx_prepare: flags = %x",t->hdr.poll_completion ? 0 : SCMI_SHMEM_FLAG_INTR_ENABLED);
+	// printk("tx_prepare: length = %x", sizeof(mem->msg_header) + t->tx.len);
+	// printk("tx_prepare: header = %x", pack_scmi_header(&t->hdr));
+	// printk("tx_prepare: payload][0]= %x",  t->tx.buf);
+	// printk("tx_prepare: tx_len 0h %x",  t->tx.len);
+	// printk("tx_prepare: rx_len 0h %x",  t->rx.len);
 
-	printk("tx_prepare: channel status addr: 0x%x",  &mem->channel_status);
-	printk("tx_prepare: payload[0] addr: 0x%x",  &mem->msg_payload);
+	// printk("tx_prepare: channel status addr: 0x%x",  &mem->channel_status);
+	// printk("tx_prepare: payload[0] addr: 0x%x",  &mem->msg_payload);
 	//adv end
 
 	/* Mark channel busy + clear error */
@@ -749,7 +749,7 @@ static int scmi_remove(struct platform_device *pdev)
 static inline int
 scmi_mbox_chan_setup(struct scmi_info *info, struct device *dev, int prot_id)
 {
-	printk("scmi_mbox_chan_setup...");
+	// printk("scmi_mbox_chan_setup...");
 	int ret;
 	struct resource res;
 	resource_size_t size;
@@ -784,7 +784,7 @@ scmi_mbox_chan_setup(struct scmi_info *info, struct device *dev, int prot_id)
 	}
 
 	size = resource_size(&res);
-	printk("size of mb cinfo->payload size: %d", size);	//adv
+	// printk("size of mb cinfo->payload size: %d", size);	//adv
 	cinfo->payload = devm_ioremap(info->dev, res.start, size);
 	if (!cinfo->payload) {
 		dev_err(dev, "failed to ioremap SCMI Tx payload\n");
