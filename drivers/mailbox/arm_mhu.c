@@ -100,6 +100,7 @@ static irqreturn_t mhu_rx_interrupt(int irq, void *p)
 	mbox_chan_received_data(chan, (void *)&val);
 
 	// // //adv start
+	printk("mhu_rx_interrupt!!!");
 	// // //writel_relaxed(val, mlink->rx_reg + INTR_CLR_OFS);
 	intr_clr(val, mlink->rx_reg + INTR_CLR_OFS);
 	// // //adv end
@@ -120,7 +121,7 @@ static int mhu_send_data(struct mbox_chan *chan, void *data)
 	u32 *arg = data;
 
 	//adv start
-	// printk("mhu_send data to addr: 0x%x", mlink->tx_reg + INTR_SET_OFS);
+	printk("mhu_send data to addr: 0x%x", mlink->tx_reg + INTR_SET_OFS);
 	//writel_relaxed(*arg, mlink->tx_reg + INTR_SET_OFS);
 	intr_set(*arg, mlink->tx_reg + INTR_SET_OFS);
 	//adv end
