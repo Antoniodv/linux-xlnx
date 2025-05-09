@@ -154,7 +154,7 @@ static int mhu_startup(struct mbox_chan *chan)
 			"Unable to acquire IRQ %d\n", mlink->irq);
 		return ret;
 	}
-	// printk("mhu_startup: OK");
+	printk("mhu_startup: OK");
 	//adv end
 	return 0;
 }
