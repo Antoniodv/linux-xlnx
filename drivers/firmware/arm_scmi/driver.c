@@ -294,9 +294,7 @@ static void scmi_tx_prepare(struct mbox_client *cl, void *m)
 	struct scmi_shared_mem __iomem *mem = cinfo->payload;
 
 	u32 reg_cnt = 0;
-	u32 packet = 0;
 	u32 byte_cnt = 0;
-	u32 end_reg;
 	//adv start
 	// printk("tx_prepare: channel status = 0");
 	// printk("tx_prepare: flags = %x",t->hdr.poll_completion ? 0 : SCMI_SHMEM_FLAG_INTR_ENABLED);
@@ -319,12 +317,16 @@ static void scmi_tx_prepare(struct mbox_client *cl, void *m)
 
 	if (t->tx.buf){// non era len?
 		//memcpy_toio(mem->msg_payload, t->tx.buf, t->tx.len);
-		end_reg = t->tx.len;		
-		for(; reg_cnt < end_reg; reg_cnt = reg_cnt + 4){
+		u32 len_in_byte = t->tx.len;		
+		for(; reg_cnt < len_in_byte; reg_cnt = reg_cnt + 4){
+			u32 packet = 0;
+			u8 *p = (u8 *)t->tx.buf + reg_cnt;
 			for (byte_cnt = 0; byte_cnt < 4; byte_cnt++){
-				packet  |= (u32)(*(u32 *)(t->tx.buf + byte_cnt + reg_cnt) << (8*byte_cnt));
+				if(reg_cnt + byte_cnt < len_in_byte){
+					packet  |= ((u32)p[byte_cnt]) << (8*byte_cnt);
+				}
 			}
-			iowrite32(packet, mem->msg_payload);
+			iowrite32(packet, mem->msg_payload + reg_cnt);
 		}
 	}
 }
